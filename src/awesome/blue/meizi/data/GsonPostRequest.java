@@ -1,15 +1,16 @@
+
 package awesome.blue.meizi.data;
-
-import com.android.volley.AuthFailureError;
-import com.android.volley.Response.ErrorListener;
-import com.android.volley.Response.Listener;
-
-import android.util.Log;
-import awesome.blue.meizi.util.GlobalDebugControl;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+
+import android.util.Log;
+import awesome.blue.meizi.util.GlobalDebugControl;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Response.ErrorListener;
+import com.android.volley.Response.Listener;
 
 public class GsonPostRequest<TPost, TReturn> extends GsonRequest<TReturn> {
 
@@ -38,7 +39,7 @@ public class GsonPostRequest<TPost, TReturn> extends GsonRequest<TReturn> {
 
         this.postData = postData;
     }
-    
+
     public GsonPostRequest(int method, TPost postData, String url,
             Type type, Listener<TReturn> listener,
             ErrorListener errorListener, boolean withToken) {
@@ -50,7 +51,7 @@ public class GsonPostRequest<TPost, TReturn> extends GsonRequest<TReturn> {
     public byte[] getBody() throws AuthFailureError {
         if (postData != null) {
             String data = gson.toJson(postData);
-            if (GlobalDebugControl.DEBUG_JSON) {
+            if (GlobalDebugControl.DEBUG_API) {
                 Log.v(TAG, "json we sent: " + data);
             }
             return data.getBytes();

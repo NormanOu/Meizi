@@ -5,8 +5,6 @@ public class GlobalDebugControl {
 
     public static final boolean isDebug = true;
 
-    public static final boolean DEBUG_JSON = isDebug && true;
-
-    public static final boolean DEBUG_API = isDebug && true;
+    public static final boolean DEBUG_API = isDebug && false;
 
 }

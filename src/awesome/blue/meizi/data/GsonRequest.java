@@ -95,14 +95,14 @@ public class GsonRequest<T> extends Request<T> {
 
     @Override
     protected Response<T> parseNetworkResponse(NetworkResponse response) {
-        if (GlobalDebugControl.DEBUG_JSON) {
+        if (GlobalDebugControl.DEBUG_API) {
             Log.v(TAG, "response.statusCode is " + response.statusCode);
         }
 
         try {
             String json = new String(response.data,
                     HttpHeaderParser.parseCharset(response.headers));
-            if (GlobalDebugControl.DEBUG_JSON) {
+            if (GlobalDebugControl.DEBUG_API) {
                 Log.v(TAG, "the result json is " + json);
                 LongLogHelper.logLong(TAG, json);
             }

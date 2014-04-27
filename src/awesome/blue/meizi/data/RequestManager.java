@@ -8,6 +8,8 @@ import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.util.TypedValue;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import awesome.blue.meizi.MeiziApplication;
 import awesome.blue.meizi.util.CacheUtils;
@@ -81,6 +83,12 @@ public class RequestManager {
     public static ImageLoader.ImageListener getImageListener(
             final ImageView view, final Drawable defaultImageDrawable,
             final Drawable errorImageDrawable) {
+        return getImageListener(view, defaultImageDrawable, errorImageDrawable, false);
+    }
+
+    public static ImageLoader.ImageListener getImageListener(
+            final ImageView view, final Drawable defaultImageDrawable,
+            final Drawable errorImageDrawable, final boolean fixScale) {
         return new ImageLoader.ImageListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -107,9 +115,27 @@ public class RequestManager {
                     } else {
                         view.setImageBitmap(response.getBitmap());
                     }
+
+                    if (fixScale) {
+                        int bitmapWidth = response.getBitmap().getWidth();
+                        int bitmapHeight = response.getBitmap().getHeight();
+                        LayoutParams params = view.getLayoutParams();
+                        params.height = (int) ((float) view.getWidth() / (float) bitmapWidth * (float) bitmapHeight);
+                        view.setLayoutParams(params);
+
+                        // [Ou Runqiang] should make the view grow from small to large
+                    }
                 } else if (defaultImageDrawable != null) {
                     view.setImageDrawable(defaultImageDrawable);
+                    if (fixScale) {
+                        LayoutParams params = view.getLayoutParams();
+                        params.height = (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP, 250,
+                                MeiziApplication.getContext().getResources().getDisplayMetrics());
+                        view.setLayoutParams(params);
+                    }
                 }
+
             }
         };
     }

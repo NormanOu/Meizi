@@ -3,13 +3,11 @@ package awesome.blue.meizi.data;
 
 import java.io.UnsupportedEncodingException;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
+import awesome.blue.meizi.control.HtmlDecoderBase;
 import awesome.blue.meizi.util.BLog;
-import awesome.blue.meizi.util.GlobalDebugControl;
 
 import com.android.volley.NetworkResponse;
+import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
@@ -22,34 +20,30 @@ public class HtmlRequest<T> extends Request<T> {
 
     private final Listener<T> mListener;
 
-    public HtmlRequest(int method, String url, Listener<T> listener, ErrorListener errorListener) {
+    private HtmlDecoderBase<T> mHtmlDecoder;
+
+    public HtmlRequest(int method, String url, Listener<T> listener, ErrorListener errorListener,
+            HtmlDecoderBase<T> htmlDecoder) {
         super(method, url, errorListener);
 
         mListener = listener;
+        mHtmlDecoder = htmlDecoder;
     }
 
     @Override
     protected Response<T> parseNetworkResponse(NetworkResponse response) {
-        if (GlobalDebugControl.isDebug) {
-            BLog.dLong(TAG, "response.statusCode is " + response.statusCode);
-        }
-
+        BLog.dLong(TAG, "response.statusCode is " + response.statusCode);
+        String htmlString = "";
         try {
-            String htmlString = new String(response.data,
+            htmlString = new String(response.data,
                     HttpHeaderParser.parseCharset(response.headers));
-            if (GlobalDebugControl.isDebug && htmlString != null) {
-                BLog.dLong(TAG, htmlString);
-            }
 
-            // TODO should move to somewhere better
-            Document document = Jsoup.parse(htmlString);
-            BLog.dLong(TAG, document.select("div .pic").html());
         } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            return Response.error(new ParseError(e));
         }
 
-        return null;
+        T result = mHtmlDecoder.decode(htmlString);
+        return Response.success(result, HttpHeaderParser.parseCacheHeaders(response));
     }
 
     @Override

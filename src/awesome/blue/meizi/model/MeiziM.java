@@ -23,4 +23,9 @@ public class MeiziM {
      * The url for the topic that shares this MeiziM(pci)
      */
     public String topicUrl;
+
+    /**
+     * Not used yet, but seems to be a data id of this MeiziM in the server
+     */
+    public String dataId;
 }

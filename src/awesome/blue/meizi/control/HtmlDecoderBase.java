@@ -3,5 +3,5 @@ package awesome.blue.meizi.control;
 
 public abstract class HtmlDecoderBase<T> {
 
-    protected abstract T decode(String html);
+    public abstract T decode(String html);
 }
