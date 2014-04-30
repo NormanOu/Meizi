@@ -19,6 +19,8 @@ import awesome.blue.meizi.util.BLog;
 import awesome.blue.meizi.view.LoadingFooter;
 
 import com.android.volley.Response;
+import com.android.volley.Response.ErrorListener;
+import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.haarman.listviewanimations.swinginadapters.AnimationAdapter;
 
@@ -84,6 +86,21 @@ public class CategoryFragment extends BaseFragment {
         });
 
         loadFirstPage();
+        CategoryControl.getTopic("http://www.dbmeizi.com/topic/47370", new Listener() {
+
+            @Override
+            public void onResponse(Object response) {
+                // TODO Auto-generated method stub
+
+            }
+        }, new ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // TODO Auto-generated method stub
+
+            }
+        }, this);
         return conteView;
     }
 
@@ -101,7 +118,7 @@ public class CategoryFragment extends BaseFragment {
 
     private void loadPage(int page) {
         BLog.d("BLUE", "loading page " + mPage);
-        CategoryControl.getAll(page, new Response.Listener<List<MeiziM>>() {
+        CategoryControl.getMeiziList(page, new Response.Listener<List<MeiziM>>() {
 
             @Override
             public void onResponse(List<MeiziM> response) {

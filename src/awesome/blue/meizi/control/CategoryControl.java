@@ -1,6 +1,7 @@
 
 package awesome.blue.meizi.control;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,11 @@ import android.text.TextUtils;
 import awesome.blue.meizi.data.HtmlRequest;
 import awesome.blue.meizi.data.RequestManager;
 import awesome.blue.meizi.model.MeiziM;
+import awesome.blue.meizi.model.TopicM;
+import awesome.blue.meizi.model.TopicM.ContentItem;
+import awesome.blue.meizi.model.TopicM.ContentItemType;
 import awesome.blue.meizi.util.BLog;
+import awesome.blue.meizi.util.DateUtil;
 import awesome.blue.meizi.util.GlobalDebugControl;
 import awesome.blue.meizi.util.StringUtils;
 
@@ -37,13 +42,87 @@ public class CategoryControl {
      * @param errorListener
      * @param tag
      */
-    public static void getAll(int page, Response.Listener<List<MeiziM>> listener,
+    public static void getMeiziList(int page, Response.Listener<List<MeiziM>> listener,
             Response.ErrorListener errorListener, Object tag) {
         String url = sCategoryUrl + "?p=" + page;
         Request<List<MeiziM>> request = new HtmlRequest<List<MeiziM>>(Method.GET, url,
                 listener, errorListener, CategoryDecoder.getInstance());
 
         RequestManager.addRequest(request, tag);
+    }
+
+    public static void getTopic(String url, Response.Listener<TopicM> listener,
+            Response.ErrorListener errorListener, Object tag) {
+        Request<TopicM> request = new HtmlRequest<TopicM>(Method.GET, url, listener, errorListener,
+                TopicDecoder.getInstance());
+        RequestManager.addRequest(request, tag);
+    }
+
+    public static class TopicDecoder extends HtmlDecoderBase<TopicM> {
+
+        private static TopicDecoder mDecoder = null;
+
+        public static HtmlDecoderBase<TopicM> getInstance() {
+            if (mDecoder == null) {
+                mDecoder = new TopicDecoder();
+            }
+
+            return mDecoder;
+        }
+
+        @Override
+        public TopicM decode(String html) {
+            TopicM resulTopicM = new TopicM();
+
+            Document document = Jsoup.parse(html);
+
+            // get title string
+            resulTopicM.title = document.select("div.row div.span9 h4").html().trim();
+            // get doubanPosterUrl and doubanTopicurl
+            Elements urlElements = document.select("div.row div.span6 div.content-meta a");
+            if (urlElements.size() >= 1) {
+                resulTopicM.doubanPosterUrl = urlElements.get(0).attr("href");
+            }
+            if (urlElements.size() >= 2) {
+                resulTopicM.doubanTopicUrl = urlElements.get(1).attr("href");
+            }
+            // get post time
+            String dateString = document.select("div.row div.span6").html();
+            String startString = "title=\"最后更新时间\"></span> ";
+            int startPos = dateString.indexOf(startString) + startString.length();
+            String endString = "<span class=\"icon-arrow-right";
+            int endPos = dateString.indexOf(endString);
+            dateString = dateString.substring(startPos, endPos).trim();
+            BLog.d(TAG, "dateString is " + dateString);
+            try {
+                resulTopicM.date = DateUtil.getDate(dateString);
+            } catch (ParseException e) {
+                BLog.e(TAG, "got topic date failed, exception is \n" + e.getMessage());
+            }
+
+            // get the main content, pictures and messages
+            Elements contentElements = document.select("div.row div.span6 div.content").first()
+                    .children();
+
+            for (int i = 0; i < contentElements.size(); i++) {
+                Element element = contentElements.get(i);
+                String tagName = element.tagName();
+                ContentItem item = new ContentItem();
+                if (tagName.equals("p")) {
+                    item.type = ContentItemType.MSG;
+                    item.msg = contentElements.get(i).html().replace("<br/>", "").trim();
+                } else if (tagName.equals("div")) {
+                    item.type = ContentItemType.IMAGE;
+                    item.imgUrl = element.select("img").attr("src").trim();
+                }
+
+                if (!TextUtils.isEmpty(item.msg) || !TextUtils.isEmpty(item.imgUrl)) {
+                    resulTopicM.content.add(item);
+                }
+            }
+
+            return resulTopicM;
+        }
     }
 
     public static class CategoryDecoder extends
