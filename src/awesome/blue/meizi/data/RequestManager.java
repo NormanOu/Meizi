@@ -10,8 +10,11 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.util.TypedValue;
 import android.view.ViewGroup.LayoutParams;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.ImageView;
 import awesome.blue.meizi.MeiziApplication;
+import awesome.blue.meizi.util.BLog;
 import awesome.blue.meizi.util.CacheUtils;
 
 import com.android.volley.Cache;
@@ -95,10 +98,11 @@ public class RequestManager {
                 if (errorImageDrawable != null) {
                     view.setImageDrawable(errorImageDrawable);
                 }
+                BLog.d("BLUE", "onErrorResponse");
             }
 
             @Override
-            public void onResponse(ImageLoader.ImageContainer response,
+            public void onResponse(final ImageLoader.ImageContainer response,
                     boolean isImmediate) {
                 if (response.getBitmap() != null) {
                     if (!isImmediate && defaultImageDrawable != null) {
@@ -117,13 +121,30 @@ public class RequestManager {
                     }
 
                     if (fixScale) {
-                        int bitmapWidth = response.getBitmap().getWidth();
-                        int bitmapHeight = response.getBitmap().getHeight();
-                        LayoutParams params = view.getLayoutParams();
-                        params.height = (int) ((float) view.getWidth() / (float) bitmapWidth * (float) bitmapHeight);
-                        view.setLayoutParams(params);
+                        if (view.getWidth() != 0) {
+                            int bitmapWidth = response.getBitmap().getWidth();
+                            int bitmapHeight = response.getBitmap().getHeight();
+                            LayoutParams params = view.getLayoutParams();
+                            params.height = (int) ((float) view.getWidth() / (float) bitmapWidth * (float) bitmapHeight);
+                            view.requestLayout();
+                        } else {
+                            ViewTreeObserver observer = view.getViewTreeObserver();
+                            observer.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
 
-                        // [Ou Runqiang] should make the view grow from small to large
+                                @Override
+                                public void onGlobalLayout() {
+                                    int bitmapWidth = response.getBitmap().getWidth();
+                                    int bitmapHeight = response.getBitmap().getHeight();
+                                    LayoutParams params = view.getLayoutParams();
+                                    params.height = (int) ((float) view.getWidth()
+                                            / (float) bitmapWidth * (float) bitmapHeight);
+                                    view.requestLayout();
+                                }
+                            });
+                        }
+
+                        // [Ou Runqiang] should make the view grow from small to
+                        // large
                     }
                 } else if (defaultImageDrawable != null) {
                     view.setImageDrawable(defaultImageDrawable);

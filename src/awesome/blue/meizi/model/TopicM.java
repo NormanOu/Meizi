@@ -13,16 +13,16 @@ public class TopicM {
 
     public String doubanTopicUrl;
 
-    public List<ContentItem> content;
+    public List<TopicContentItem> content;
 
     public Date date;
 
     public TopicM() {
         date = new Date();
-        content = new ArrayList<TopicM.ContentItem>();
+        content = new ArrayList<TopicM.TopicContentItem>();
     }
 
-    public static class ContentItem {
+    public static class TopicContentItem {
         public ContentItemType type;
 
         public String imgUrl;

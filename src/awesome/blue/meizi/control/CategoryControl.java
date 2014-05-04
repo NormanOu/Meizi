@@ -10,13 +10,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import android.text.Html;
 import android.text.TextUtils;
 import awesome.blue.meizi.data.HtmlRequest;
 import awesome.blue.meizi.data.RequestManager;
 import awesome.blue.meizi.model.MeiziM;
 import awesome.blue.meizi.model.TopicM;
-import awesome.blue.meizi.model.TopicM.ContentItem;
 import awesome.blue.meizi.model.TopicM.ContentItemType;
+import awesome.blue.meizi.model.TopicM.TopicContentItem;
 import awesome.blue.meizi.util.BLog;
 import awesome.blue.meizi.util.DateUtil;
 import awesome.blue.meizi.util.GlobalDebugControl;
@@ -32,7 +33,7 @@ public class CategoryControl {
 
     private static String sHost = "http://www.dbmeizi.com";
 
-    private static String sCategoryUrl = sHost + "/category/10";
+    private static String sCategoryUrl = sHost + "/category/";
 
     /**
      * Get the data of Category All
@@ -42,9 +43,10 @@ public class CategoryControl {
      * @param errorListener
      * @param tag
      */
-    public static void getMeiziList(int page, Response.Listener<List<MeiziM>> listener,
+    public static void getMeiziList(int categoryID, int page,
+            Response.Listener<List<MeiziM>> listener,
             Response.ErrorListener errorListener, Object tag) {
-        String url = sCategoryUrl + "?p=" + page;
+        String url = sCategoryUrl + categoryID + "?p=" + page;
         Request<List<MeiziM>> request = new HtmlRequest<List<MeiziM>>(Method.GET, url,
                 listener, errorListener, CategoryDecoder.getInstance());
 
@@ -107,17 +109,49 @@ public class CategoryControl {
             for (int i = 0; i < contentElements.size(); i++) {
                 Element element = contentElements.get(i);
                 String tagName = element.tagName();
-                ContentItem item = new ContentItem();
                 if (tagName.equals("p")) {
-                    item.type = ContentItemType.MSG;
-                    item.msg = contentElements.get(i).html().replace("<br/>", "").trim();
-                } else if (tagName.equals("div")) {
-                    item.type = ContentItemType.IMAGE;
-                    item.imgUrl = element.select("img").attr("src").trim();
-                }
+                    // in case incorrect syntax
+                    Elements pImgElements = element.select("img");
+                    if (pImgElements.size() != 0) {
+                        for (int j = 0; j < pImgElements.size(); j++) {
+                            TopicContentItem item = new TopicContentItem();
+                            item.type = ContentItemType.IMAGE;
+                            item.imgUrl = pImgElements.get(j).attr("src");
 
-                if (!TextUtils.isEmpty(item.msg) || !TextUtils.isEmpty(item.imgUrl)) {
-                    resulTopicM.content.add(item);
+                            if (!TextUtils.isEmpty(item.imgUrl)) {
+                                resulTopicM.content.add(item);
+                            }
+                        }
+                    } else {
+                        TopicContentItem item = new TopicContentItem();
+                        item.type = ContentItemType.MSG;
+                        String pContent = contentElements.get(i).html();
+                        item.msg = Html.fromHtml(pContent).toString().trim();
+
+                        if (!TextUtils.isEmpty(item.msg)) {
+                            resulTopicM.content.add(item);
+                        }
+                    }
+                } else if (tagName.equals("div")) {
+                    TopicContentItem item = new TopicContentItem();
+                    item.type = ContentItemType.IMAGE;
+                    Elements divElements = element.select("img");
+                    Element imgElement = divElements.first();
+                    if (imgElement != null) {
+                        item.imgUrl = imgElement.attr("src");
+                    }
+
+                    if (!TextUtils.isEmpty(item.imgUrl)) {
+                        resulTopicM.content.add(item);
+                    }
+                } else if (tagName.equals("img")) {
+                    TopicContentItem item = new TopicContentItem();
+                    item.type = ContentItemType.IMAGE;
+                    item.imgUrl = element.attr("src");
+
+                    if (!TextUtils.isEmpty(item.imgUrl)) {
+                        resulTopicM.content.add(item);
+                    }
                 }
             }
 
